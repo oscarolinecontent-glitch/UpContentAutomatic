@@ -59,13 +59,19 @@ jobs:
       - name: Determine action
         id: action
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "cmd=${{ inputs.action }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event.schedule }}" = "30 14 * * *" ]; then
-            echo "cmd=report" >> $GITHUB_OUTPUT
-          else
-            echo "cmd=post" >> $GITHUB_OUTPUT
+          ACTION="${{ github.event.inputs.action }}"
+          if [ -z "$ACTION" ]; then
+            ACTION="${{ inputs.action }}"
           fi
+          if [ -z "$ACTION" ]; then
+            if [ "${{ github.event.schedule }}" = "30 14 * * *" ]; then
+              ACTION="report"
+            else
+              ACTION="post"
+            fi
+          fi
+          echo "Selected action: $ACTION"
+          echo "cmd=$ACTION" >> $GITHUB_OUTPUT
 
       - name: Scrape rooms first (if posting)
         if: steps.action.outputs.cmd == 'post'

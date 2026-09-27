@@ -479,11 +479,14 @@ async def post_to_specific_group(group_url: str, room = None, headless: bool = F
     print(f"[Poster] 🖼️ Sẵn sàng đăng với {len(image_paths)} ảnh!")
     
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(
-            headless=headless,
-            channel="chrome",
-            args=["--start-maximized", "--disable-blink-features=AutomationControlled"]
-        )
+        launch_kwargs = {
+            "headless": headless,
+            "args": ["--no-sandbox", "--disable-dev-shm-usage", "--disable-blink-features=AutomationControlled"]
+        }
+        if os.name == "nt" and not headless:
+            launch_kwargs["channel"] = "chrome"
+            launch_kwargs["args"].append("--start-maximized")
+        browser = await pw.chromium.launch(**launch_kwargs)
         page = await load_facebook_session(browser)
         
         if not await check_if_logged_in(page):
