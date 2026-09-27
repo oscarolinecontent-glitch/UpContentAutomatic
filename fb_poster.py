@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-GROUPS_FILE = Path("./nhóm")
+GROUPS_FILE = Path("./groups.txt") if Path("./groups.txt").exists() else Path("./nhóm")
 COOKIES_FILE = Path(os.getenv("FB_COOKIES_PATH", "./data/fb_cookies.json"))
 POSTED_LOG = Path("./data/posted_log.json")
 

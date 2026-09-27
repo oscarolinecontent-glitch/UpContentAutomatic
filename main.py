@@ -164,7 +164,7 @@ async def main():
         print_help()
         return
     
-    cmd = sys.argv[1].lower()
+    cmd = sys.argv[1].strip().replace("\r", "").lower()
     
     commands = {
         "scrape": cmd_scrape,

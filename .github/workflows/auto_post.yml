@@ -2,16 +2,15 @@ name: HiFriendz Auto Post
 
 on:
   schedule:
-    # Đăng bài lúc 7h sáng (UTC+7 = 0h UTC)
+    # 7h sáng VN (0h UTC)
     - cron: '0 0 * * *'
-    # Đăng bài lúc 12h trưa (UTC+7 = 5h UTC)  
+    # 12h trưa VN (5h UTC)
     - cron: '0 5 * * *'
-    # Đăng bài lúc 19h tối (UTC+7 = 12h UTC)
+    # 19h tối VN (12h UTC)
     - cron: '0 12 * * *'
-    # Báo cáo tổng kết lúc 21h30 (UTC+7 = 14h30 UTC)
+    # 21h30 tối VN (14h30 UTC) - Báo cáo tổng kết
     - cron: '30 14 * * *'
-  
-  # Cho phép chạy thủ công từ GitHub Actions UI
+
   workflow_dispatch:
     inputs:
       action:
@@ -56,41 +55,35 @@ jobs:
         run: |
           printf '%s' "$FB_COOKIES" > data/fb_cookies.json
 
-      - name: Determine action
-        id: action
-        run: |
-          ACTION="${{ github.event.inputs.action }}"
-          if [ -z "$ACTION" ]; then
-            ACTION="${{ inputs.action }}"
-          fi
-          if [ -z "$ACTION" ]; then
-            if [ "${{ github.event.schedule }}" = "30 14 * * *" ]; then
-              ACTION="report"
-            else
-              ACTION="post"
-            fi
-          fi
-          echo "Selected action: $ACTION"
-          echo "cmd=$ACTION" >> $GITHUB_OUTPUT
-
-      - name: Scrape rooms first (if posting)
-        if: steps.action.outputs.cmd == 'post'
+      - name: Run Action
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          INPUT_ACTION: ${{ github.event.inputs.action }}
+          SCHEDULE: ${{ github.event.schedule }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python main.py scrape
-
-      - name: Run action
-        env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           FB_COOKIES_PATH: ./data/fb_cookies.json
-          MAX_POSTS_PER_DAY: '10'
+          MAX_POSTS_PER_DAY: '12'
           POST_DELAY_MIN: '300'
-          POST_DELAY_MAX: '900'
-        run: python main.py ${{ steps.action.outputs.cmd }}
+          POST_DELAY_MAX: '600'
+        run: |
+          if [ -n "$INPUT_ACTION" ]; then
+            CMD="$INPUT_ACTION"
+          elif [ "$SCHEDULE" = "30 14 * * *" ]; then
+            CMD="report"
+          else
+            CMD="post"
+          fi
+          CMD=$(echo "$CMD" | tr -d '\r\n')
+          echo "=========================================="
+          echo "🚀 ĐANG CHẠY LỆNH: python main.py $CMD"
+          echo "=========================================="
+          
+          if [ "$CMD" = "post" ]; then
+            python main.py scrape
+          fi
+          
+          python main.py "$CMD"
 
       - name: Upload activity log
         if: always()
