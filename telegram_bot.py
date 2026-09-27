@@ -373,7 +373,9 @@ async def start_bot():
                 if "message" in update:
                     await handle_command(update["message"])
         except Exception as e:
-            print(f"[Bot] Lỗi: {e}")
+            import traceback
+            traceback.print_exc()
+            print(f"[Bot] Lỗi: {repr(e)}")
         
         await asyncio.sleep(2)
 
