@@ -1,0 +1,17 @@
+# Environment & Credentials
+.env
+.env.*
+
+# Local data & runtime artifacts
+data/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# System
+.DS_Store
+Thumbs.db
